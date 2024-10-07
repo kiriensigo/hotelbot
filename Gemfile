@@ -54,6 +54,6 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
-  gem"line-bot-api"
-  gem"dotenv-rails"
+  gem "line-bot-api"
+  gem "dotenv-rails"
 end
