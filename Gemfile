@@ -56,4 +56,5 @@ group :test do
   gem "selenium-webdriver"
   gem "line-bot-api"
   gem "dotenv-rails"
+  gem "httpclient"
 end

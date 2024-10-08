@@ -106,6 +106,7 @@ GEM
     erubi (1.13.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    httpclient (2.8.3)
     i18n (1.14.6)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.0.2)
@@ -285,6 +286,7 @@ DEPENDENCIES
   capybara
   debug
   dotenv-rails
+  httpclient
   importmap-rails
   jbuilder
   line-bot-api

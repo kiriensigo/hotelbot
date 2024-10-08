@@ -34,4 +34,16 @@ class LineBotController < ApplicationController
               config.channel_token = ENV['LINE_CHANNEL_TOKEN']
             }
     end
+
+    def search_and create_message(keyword)
+        http_client = HTTPClient.new
+        url = 'https://app.rakuten.co.jp/services/api/Travel/keywordHotelSearch/20170426'
+        query = {
+            'keyword' => keyword,
+            'applicationId' => ENV['RAKUTEN_APPID']
+            'hits' => 5,
+            'responseType' => 'ssmall'
+            'formatVersion' => 2
+        }
+    end
   end
