@@ -1,4 +1,5 @@
 class LineBotController < ApplicationController
+    require 'httpclient'
     require 'line/bot'
     protect_from_forgery except: [:callback]
   
@@ -15,10 +16,7 @@ class LineBotController < ApplicationController
           when Line::Bot::Event::Message
             case event.type
             when Line::Bot::Event::MessageType::Text
-              message = {
-                type: 'text',
-                text: event.message['text']
-              }
+              message = search_and_create_message(event.message['text'])
               client.reply_message(event['replyToken'], message)
             end
           end
@@ -35,17 +33,29 @@ class LineBotController < ApplicationController
             }
     end
 
-    def search_and create_message(keyword)
+    def search_and_create_message(keyword)
         http_client = HTTPClient.new
-        url = 'https://app.rakuten.co.jp/services/api/Travel/keywordHotelSearch/20170426'
+        url = 'https://app.rakuten.co.jp/services/api/Travel/KeywordHotelSearch/20241106'
         query = {
-            'keyword' => keyword,
-            'applicationId' => ENV['RAKUTEN_APPID']
-            'hits' => 5,
-            'responseType' => 'ssmall'
-            'formatVersion' => 2
+          'keyword' => keyword,
+          'applicationId' => ENV['RAKUTEN_APPID'],
+          'hits' => 5,
+          'responseType' => 'small',
+          'formatVersion' => 2
         }
-        response = http_client.get(url.query)
+        response = http_client.get(url, query)
         response = JSON.parse(response.body)
+
+        text = ''
+        response['hotels'].each do |hotel|
+            hotel[0]['hotelBasicInfo']['hotelName'] + "¥n" +
+            hotel[0]['hotelBasicInfo']['hotelInformationUrl'] + "¥n" +
+            "¥n"
+        end
+
+        message = {
+            type: 'text',
+            text: text
+        }
     end
   end
