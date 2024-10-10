@@ -57,4 +57,5 @@ group :test do
   gem "line-bot-api"
   gem "dotenv-rails"
   gem "httpclient"
+  gem "mutex_m"
 end
