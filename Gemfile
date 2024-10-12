@@ -58,4 +58,5 @@ group :test do
   gem "dotenv-rails"
   gem "httpclient"
   gem "mutex_m"
+  gem "dotenv-rails"
 end
