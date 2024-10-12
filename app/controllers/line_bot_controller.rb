@@ -16,8 +16,10 @@ class LineBotController < ApplicationController
           when Line::Bot::Event::Message
             case event.type
             when Line::Bot::Event::MessageType::Text
+              client.reply_message(event['replyToken'], {type: 'text', text: 'リクエストを処理中です...'})
               message = search_and_create_message(event.message['text'])
               client.reply_message(event['replyToken'], message)
+              client.reply_message(event['replyToken'], {type: 'text', text: '処理が完了しました'})
             end
           end
         end
@@ -43,6 +45,7 @@ class LineBotController < ApplicationController
         'applicationId' => ENV['RAKUTEN_APPID'],
         'hits' => 5,
         'responseType' => 'small',
+        'datumType' => 1,
         'formatVersion' => 2
       }
       # Rails.logger.debug "RAKUTEN_APPID: #{ENV['RAKUTEN_APPID']}"
@@ -52,37 +55,159 @@ class LineBotController < ApplicationController
         response = http_client.get(url, query)
         
          Rails.logger.debug "Rakuten API response status: #{response.status}"
-         Rails.logger.debug "Rakuten API response body: #{response.body}"
-        
-        if response.status == 200
-          result = JSON.parse(response.body)
-          
-          text = ''
-          if result['hotels'] && !result['hotels'].empty?
-            result['hotels'].each do |hotel|
-              text += hotel[0]['hotelBasicInfo']['hotelName'] + "\n" +
-                      hotel[0]['hotelBasicInfo']['hotelInformationUrl'] + "\n\n"
-            end
-          else
-            text = "該当するホテルが見つかりませんでした。"
-          end
+        #  Rails.logger.debug "Rakuten API response body: #{response.body}"
+
+         result = JSON.parse(response.body)
+        if result['error']
+          text = "この検索条件に該当する宿泊施設が見つかりませんでした。\n条件を変えて再検索してください"
+          {
+            type: 'text',
+            text: text
+          }
         else
-          error_body = JSON.parse(response.body) rescue nil
-          error_message = error_body['error_description'] if error_body
-          text = "申し訳ありません。ホテル情報の取得中にエラーが発生しました。(#{error_message || "ステータスコード: #{response.status}"})"
+        {
+          type: 'flex',
+          altText:'宿泊検索の結果です',
+          contents: set_carousel(result['hotels'])
+          }
         end
-      rescue => e
-        Rails.logger.error "test: #{e.message}"
-        text = "申し訳ありません。ホテル情報の取得中にエラーが発生しました。"
       end
-    
-      message = {
-        type: 'text',
-        text: text
-      }
-      
-      # Rails.logger.debug "Created message: #{message.inspect}"
-      
-      message
-    end
   end
+  
+  def set_carousel(hotels)
+    bubbles = []
+    hotels.each do |hotel|
+      bubbles.push set_bubble(hotel[0]['hotelBasicInfo'])
+    end
+    {
+      type: 'carousel',
+      contents: bubbles
+    }
+  end
+
+  def set_bubble(hotel)
+    {
+      type: 'bubble',
+      hero: set_hero(hotel),
+      body: set_body(hotel),
+      footer: set_footer(hotel)
+    }
+  end
+
+  def set_hero(hotel)
+    {
+      type: 'image',
+      url: hotel['hotelImageUrl'],
+      size: 'full',
+      aspectRatio: '20:13',
+      aspectMode: 'cover',
+      action: {
+        type: 'uri',
+        uri: hotel['hotelInformationUrl']
+      }
+    }
+  end
+
+  def set_body(hotel)
+    {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'text',
+          text: hotel['hotelName'],
+          warp: true,
+          weight: 'bold',
+          size: 'md'
+        },
+      {
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'box',
+              layout: 'baseline',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'text',
+                  text: '住所',
+                  color: '#aaaaaa',
+                  size: 'sm',
+                  flex: 1
+                },
+                {
+                  type: 'text',
+                  text: hotel['address1'] + hotel['address2'],
+                  warp: true,
+                  color: '#666666',
+                  size: 'sm',
+                  flex: 5
+                }
+              ]
+            },
+            {
+              type: 'box',
+              layout: 'vertical',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'text',
+                  text: '料金',
+                  color: '#aaaaaa',
+                  size: 'sm',
+                  flex: 1
+                },
+                {
+                  type: 'text',
+                  text: '¥' + hotel['hotelMinCharge'].to_formatted_s(:delimited) + '〜',
+                  warp: true,
+                  color: '#666666',
+                  size: 'sm',
+                  flex: 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+end
+
+def set_footer(hotel)
+  {
+    type: 'box',
+    layout: 'vertical',
+    spacing: 'sm',
+    contents: [
+      {
+        type: 'button',
+        style: 'link',
+        height: 'sm',
+        action: {
+          type: 'uri',
+          label: '電話する',
+          uri: 'tel:' + hotel['telephoneNo']
+        }
+      },
+      {
+        type: 'button',
+        style: 'link',
+        height: 'sm',
+        action: {
+          type: 'uri',
+          label: '地図を見る',
+          uri: 'https://www.google.com/maps?q=' + hotel['latitude'].to_s + ',' + hotel['longitude'].to_s
+        }
+      },
+      {
+        type: 'spacer',
+        size: 'sm'
+      }
+    ],
+    flex: 0
+  }
+end
+end
