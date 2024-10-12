@@ -1,4 +1,4 @@
-require 'line/bot/api'
+require 'line/bot'
 require 'net/http'
 require 'uri'
 require 'json'
