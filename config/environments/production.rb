@@ -99,4 +99,15 @@ Rails.application.configure do
   # ]
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # 静的ファイルの提供を有効化
+config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
+
+# アセットのダイジェストを有効化
+config.assets.digest = true
+
+# ログレベルを INFO に設定（既存のコードを置き換え）
+config.log_level = :info
+
+# データベース接続プールのサイズを設定
+config.active_record.database_pool = ENV.fetch("RAILS_MAX_THREADS") { 5 }
 end

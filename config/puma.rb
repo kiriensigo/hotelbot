@@ -32,3 +32,15 @@ plugin :tmp_restart
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# 環境に応じてワーカー数を設定
+workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+
+# プリロードを有効化
+preload_app!
+
+# Specifies the `environment` that Puma will run in.
+environment ENV.fetch("RAILS_ENV") { "production" }
+
+# アプリケーションのディレクトリを指定
+directory ENV.fetch("RAILS_ROOT") { "." }
