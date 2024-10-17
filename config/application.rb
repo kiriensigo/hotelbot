@@ -2,6 +2,7 @@ require_relative "boot"
 require "rails/all"
 require 'line/bot'
 
+
 # dotenv の読み込みを開発環境とテスト環境のみに制限
 if Rails.env.development? || Rails.env.test?
   require 'dotenv/load'
